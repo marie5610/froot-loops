@@ -10,10 +10,12 @@ import {
   UseInterceptors,
   UploadedFile,
   Query,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
+import { Request } from 'express';
 
 import { UsersService } from './users.service';
 import { CreateUserDto, UserPagination } from './dto/create-user.dto';
@@ -23,6 +25,7 @@ import { RoleGuard } from 'src/auth/guards/role.guard';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { Roles } from 'src/auth/decorators/role.decorator';
 import { Role } from 'src/auth/models/role.model';
+import { PayloadToken } from 'src/auth/models/token.model';
 
 export const storage = {
   storage: diskStorage({
@@ -52,13 +55,14 @@ export class UsersController {
   }
 
   @Roles(Role.USER)
-  @Patch('picture/:id')
+  @Patch('picture')
   @UseInterceptors(FileInterceptor('file', storage))
   uploadFile(
     @UploadedFile() file: Express.Multer.File,
-    @Param('id') id: string,
+    @Req() request: Request,
   ) {
-    return this.usersService.uploadFile(file.path, +id);
+    const user = request.user as PayloadToken;
+    return this.usersService.uploadFile(file.path, +user.sub);
   }
 
   @Roles(Role.ADMIN)

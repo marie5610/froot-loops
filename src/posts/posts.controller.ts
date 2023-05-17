@@ -62,9 +62,10 @@ export class PostsController {
   @UseInterceptors(FileInterceptor('file', storage))
   uploadFile(
     @UploadedFile() file: Express.Multer.File,
-    @Param('id') id: string,
+    @Req() request: Request,
   ) {
-    return this.postsService.uploadFile(file.path, +id);
+    const user = request.user as PayloadToken;
+    return this.postsService.uploadFile(file.path, user.sub);
   }
 
   @Get('profile')
