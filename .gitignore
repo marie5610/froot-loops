@@ -1,6 +1,7 @@
 # compiled output
 /dist
 /node_modules
+/postgres_data/
 
 # Logs
 logs
@@ -145,4 +146,3 @@ $RECYCLE.BIN/
 *.lnk
 
 *.env
-/postgres_data
