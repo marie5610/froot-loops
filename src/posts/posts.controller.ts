@@ -58,7 +58,7 @@ export class PostsController {
 
   @Roles(Role.USER)
   @UseGuards(JwtAuthGuard, RoleGuard, UserIsAuthorGuard)
-  @Patch('picture/:id')
+  @Patch('picture')
   @UseInterceptors(FileInterceptor('file', storage))
   uploadFile(
     @UploadedFile() file: Express.Multer.File,
