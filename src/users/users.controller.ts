@@ -11,11 +11,13 @@ import {
   UploadedFile,
   Query,
   Req,
+  UsePipes,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
+import { ApiTags } from '@nestjs/swagger';
 
 import { UsersService } from './users.service';
 import { CreateUserDto, UserPagination } from './dto/create-user.dto';
@@ -26,6 +28,7 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { Roles } from 'src/auth/decorators/role.decorator';
 import { Role } from 'src/auth/models/role.model';
 import { PayloadToken } from 'src/auth/models/token.model';
+import { ValidationPipe } from 'src/common/validation.pipe';
 
 export const storage = {
   storage: diskStorage({
@@ -44,12 +47,14 @@ export const storage = {
 };
 
 @UseGuards(JwtAuthGuard, RoleGuard)
+@ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Public()
   @Post()
+  @UsePipes(new ValidationPipe())
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
@@ -77,7 +82,7 @@ export class UsersController {
     return this.usersService.PaginateFilter(params);
   }
 
-  @Roles(Role.USER)
+  @Roles(Role.ADMIN)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(+id);

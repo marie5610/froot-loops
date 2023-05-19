@@ -11,11 +11,13 @@ import {
   UseInterceptors,
   UploadedFile,
   Query,
+  UsePipes,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
+import { ApiTags } from '@nestjs/swagger';
 
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -26,6 +28,7 @@ import { Roles } from 'src/auth/decorators/role.decorator';
 import { Role } from 'src/auth/models/role.model';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { UserIsAuthorGuard } from 'src/auth/guards/user-is-author.guard';
+import { ValidationPipe } from 'src/common/validation.pipe';
 
 export const storage = {
   storage: diskStorage({
@@ -43,6 +46,7 @@ export const storage = {
   },
 };
 
+@ApiTags('posts')
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
@@ -50,6 +54,7 @@ export class PostsController {
   @Post()
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(Role.USER)
+  @UsePipes(new ValidationPipe())
   create(@Req() request: Request, @Body() createPostDto: CreatePostDto) {
     const user = request.user as PayloadToken;
     createPostDto.userId = user.sub;
