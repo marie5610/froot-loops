@@ -12,6 +12,7 @@ import {
   Query,
   Req,
   UsePipes,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -59,7 +60,7 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.ADMIN)
   @Patch('picture')
   @UseInterceptors(FileInterceptor('file', storage))
   uploadFile(
@@ -82,26 +83,44 @@ export class UsersController {
     return this.usersService.PaginateFilter(params);
   }
 
-  @Roles(Role.ADMIN)
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @Roles(Role.USER, Role.ADMIN)
+  @Get('profile')
+  findOne(@Req() request: Request) {
+    const user = request.user as PayloadToken;
+    return this.usersService.findOne(+user.sub);
   }
 
+  @Roles(Role.USER, Role.ADMIN)
   @Get('search')
   findByName(@Query('name') name: string) {
     return this.usersService.findByName(name);
   }
 
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.ADMIN)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: Request,
+  ) {
+    const user = req.user as PayloadToken;
+    if (+user.sub !== +id) {
+      throw new UnauthorizedException(
+        'No tienes permiso para modificar este perfil',
+      );
+    }
     return this.usersService.update(+id, updateUserDto);
   }
 
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    const user = req.user as PayloadToken;
+    if (+user.sub !== +id) {
+      throw new UnauthorizedException(
+        'No tienes permiso para eliminar este perfil',
+      );
+    }
     return this.usersService.remove(+id);
   }
 }

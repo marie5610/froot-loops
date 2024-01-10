@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Query,
-  UsePipes,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
@@ -28,7 +28,6 @@ import { Roles } from 'src/auth/decorators/role.decorator';
 import { Role } from 'src/auth/models/role.model';
 import { PayloadToken } from 'src/auth/models/token.model';
 import { UserIsAuthorGuard } from 'src/auth/guards/user-is-author.guard';
-import { ValidationPipe } from 'src/common/validation.pipe';
 
 export const storage = {
   storage: diskStorage({
@@ -51,26 +50,20 @@ export const storage = {
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
-  @Post()
+  //publicar post con imagenes
+  @Roles(Role.USER, Role.ADMIN)
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(Role.USER)
-  @UsePipes(new ValidationPipe())
-  create(@Req() request: Request, @Body() createPostDto: CreatePostDto) {
-    const user = request.user as PayloadToken;
-    createPostDto.userId = user.sub;
-    return this.postsService.create(createPostDto);
-  }
-
-  @Roles(Role.USER)
-  @UseGuards(JwtAuthGuard, RoleGuard, UserIsAuthorGuard)
-  @Patch('picture')
+  @Post('upload')
   @UseInterceptors(FileInterceptor('file', storage))
-  uploadFile(
+  create(
     @UploadedFile() file: Express.Multer.File,
     @Req() request: Request,
+    @Body() createPostDto: CreatePostDto,
   ) {
     const user = request.user as PayloadToken;
-    return this.postsService.uploadFile(file.path, user.sub);
+    createPostDto.picture = file.path;
+    this.postsService.create(createPostDto, user.sub);
+    return createPostDto;
   }
 
   @Get('profile')
@@ -87,17 +80,22 @@ export class PostsController {
   }
 
   @Get('search')
-  findBy(@Query('query') query: string) {
-    return this.postsService.findBy(query);
+  findByTitle(@Query('title') title: string) {
+    return this.postsService.findByTitle(title);
   }
 
-  @UseGuards(JwtAuthGuard, RoleGuard, UserIsAuthorGuard)
+  @UseGuards(JwtAuthGuard, UserIsAuthorGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
     return this.postsService.update(+id, updatePostDto);
   }
 
-  @UseGuards(JwtAuthGuard, RoleGuard, UserIsAuthorGuard)
+  @Patch(':id/likes')
+  likes(@Param('id') id: string) {
+    return this.postsService.likePost(+id);
+  }
+
+  @UseGuards(JwtAuthGuard, UserIsAuthorGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.postsService.remove(+id);

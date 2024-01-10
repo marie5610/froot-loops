@@ -27,7 +27,7 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   picture: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', default: 'user' })
   role: string;
 
   @Column({ type: 'varchar' })

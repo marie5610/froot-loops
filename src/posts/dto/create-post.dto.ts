@@ -7,7 +7,8 @@ export class CreatePostDto {
   @IsString()
   description?: string;
   @IsNumber()
-  userId?: number;
+  @IsNotEmpty()
+  userId: number;
   @IsString()
   picture?: string;
   @IsNumber()

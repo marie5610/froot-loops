@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto, UserPagination } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { Like, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -37,7 +37,7 @@ export class UsersService {
         email: true,
       },
       where: {
-        name: Like(`%${params.name}%`),
+        name: ILike(`%${params.name}%`),
       },
     });
   }
@@ -55,7 +55,7 @@ export class UsersService {
   async findByName(name: string) {
     const users = await this.userRepo.find({
       where: {
-        name: Like(`%${name}%`),
+        name: ILike(`%${name}%`),
       },
     });
     return users;
